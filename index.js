@@ -4,6 +4,7 @@ import mongoose from 'mongoose'
 import studentRouter from "./routers/studentRouter.js"
 import Student from "./models/student.js"
 import userRouter from "./routers/userRouter.js"
+import authenticate from "./middlewares/authenticate.js"
 
 import dns from "node:dns";
 dns.setServers(["1.1.1.1","8.8.8.8"]);
@@ -18,6 +19,9 @@ mongoose.connect(mongoDBURI).then(
 
 
 app.use(express.json())
+app.use(authenticate)
+    
+
 app.use("/students",studentRouter)
 app.use("/users",userRouter)
 
