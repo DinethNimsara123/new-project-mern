@@ -6,7 +6,9 @@ import Student from "./models/student.js"
 import userRouter from "./routers/userRouter.js"
 import authenticate from "./middlewares/authenticate.js"
 
+
 import dns from "node:dns";
+import productRouter from "./routers/productRouter.js"
 dns.setServers(["1.1.1.1","8.8.8.8"]);
 
 const mongoDBURI = "mongodb+srv://dineth:123321@cluster0.6yjtw68.mongodb.net/?appName=Cluster0"
@@ -19,11 +21,16 @@ mongoose.connect(mongoDBURI).then(
 
 
 app.use(express.json())
+app.use("/users",userRouter)
+app.use("/products",productRouter)
+
 app.use(authenticate)
+
     
 
 app.use("/students",studentRouter)
-app.use("/users",userRouter)
+
+
 
 
 app.get(
