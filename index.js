@@ -5,13 +5,15 @@ import studentRouter from "./routers/studentRouter.js"
 import Student from "./models/student.js"
 import userRouter from "./routers/userRouter.js"
 import authenticate from "./middlewares/authenticate.js"
+import dotenv from "dotenv"
+dotenv.config()
 
 
 import dns from "node:dns";
 import productRouter from "./routers/productRouter.js"
 dns.setServers(["1.1.1.1","8.8.8.8"]);
 
-const mongoDBURI = "mongodb+srv://dineth:123321@cluster0.6yjtw68.mongodb.net/?appName=Cluster0"
+const mongoDBURI = process.env.MONGO_URI
 mongoose.connect(mongoDBURI).then(
 
     ()=>{
