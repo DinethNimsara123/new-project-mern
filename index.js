@@ -6,7 +6,11 @@ import Student from "./models/student.js"
 import userRouter from "./routers/userRouter.js"
 import authenticate from "./middlewares/authenticate.js"
 import dotenv from "dotenv"
+import cors from "cors"
+
 dotenv.config()
+
+
 
 
 import dns from "node:dns";
@@ -21,7 +25,7 @@ mongoose.connect(mongoDBURI).then(
     }
 )
 
-
+app.use(cors())
 app.use(express.json())
 app.use("/users",userRouter)
 app.use("/products",productRouter)
