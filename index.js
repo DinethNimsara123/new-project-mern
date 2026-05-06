@@ -27,8 +27,8 @@ mongoose.connect(mongoDBURI).then(
 
 app.use(cors())
 app.use(express.json())
-app.use("/users",userRouter)
-app.use("/products",productRouter)
+app.use("/api/users",userRouter)
+app.use("/api/products",productRouter)
 
 app.use(authenticate)
 

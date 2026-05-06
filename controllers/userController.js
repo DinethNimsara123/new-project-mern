@@ -57,7 +57,7 @@ export async function loginUser(req,res){
             },
           process.env.JWT_SECRET_KEY
         )
-         res.json({message:"Login successfully",token:token})
+         res.json({message:"Login successfully",token:token,role : user.isAdmin?"Admin":"User"})
        }else{
         res.status(401).json({message:"Invalid password"})
        }
