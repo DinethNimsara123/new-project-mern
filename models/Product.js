@@ -29,7 +29,11 @@ const productSchema = new mongoose.Schema(
         },
         image:{
             type:[String],
-            default:["/default-product-1.png,/default-product-2.png"],
+            default:[
+    "/default-product-1.png",
+    "/default-product-2.png",
+    "/default-product-3.png"
+  ],
             required:true
         },
         isAvailable:{
