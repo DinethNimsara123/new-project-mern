@@ -2,6 +2,8 @@ import Product from "../models/Product.js"
 
 
 export async function creatProduct(req,res){
+    console.log(req.user)
+console.log(req.user.isAdmin)
      if(req.user==null ){
         res.status(401).json({message:"unauthorized"})
         return
@@ -60,7 +62,9 @@ export async function deletProduct(req,res){
                 res.status(404).json({message:"product not found"})
                 return
               }
-            await Product.deleteOne({productId:req.body.productId})
+          //  await Product.deleteOne({productId:req.body.productId})
+           await Product.deleteOne({productId:req.params.productId})
+           console.log(product deleted successfully)
             res.json ({message:" product deleted successfully"})
                  
         }catch(err){
