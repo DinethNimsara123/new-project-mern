@@ -8,6 +8,7 @@ import authenticate from "./middlewares/authenticate.js"
 import dotenv from "dotenv"
 import cors from "cors"
 
+
 dotenv.config()
 
 
@@ -15,6 +16,7 @@ dotenv.config()
 
 import dns from "node:dns";
 import productRouter from "./routers/productRouter.js"
+import orderRouter from "./routers/orderRouter.js"
 dns.setServers(["1.1.1.1","8.8.8.8"]);
 
 const mongoDBURI = process.env.MONGO_URI
@@ -29,6 +31,7 @@ app.use(cors())
 app.use(express.json())
 app.use("/api/users",userRouter)
 app.use("/api/products",productRouter)
+app.use("/api/orders", orderRouter);
 
 app.use(authenticate)
 
