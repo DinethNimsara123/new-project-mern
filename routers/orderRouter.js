@@ -25,7 +25,7 @@ router.delete("/customer-cancel/:id", orderController.cancelOrderByCustomer);
 export default orderRouter;*/
 
 import express from "express";
-import { createOrder,getAllOrders,deleteOrder, cancelOrderByCustomer,updateOrderStatus} from "../controllers/orderController.js";
+import { createOrder,getAllOrders,deleteOrder, cancelOrderByCustomer,updateOrderStatus,updateOrderMessage} from "../controllers/orderController.js";
 
 // 🔐 🔥 සර්ගේ authMiddleware එක (jwt) තියෙන ෆයිල් එක මෙතනින් import කරගන්නවා
 // (සටහන: ඔයාගේ jwt middleware ෆයිල් එක තියෙන්නේ 'middlewares/auth.js' වගේ වෙනත් තැනක නම් ඒ path එක දෙන්න)
@@ -50,5 +50,7 @@ orderRouter.delete("/customer-cancel/:id", authenticate, cancelOrderByCustomer);
 // 🔄 Admin කෙනෙක්ට ඕඩර් ස්ටේටස් එක අප්ඩේට් කරන්න දාපු අලුත්ම රවුට් එක
 
 orderRouter.put("/update-status/:orderId", authenticate, updateOrderStatus);
+
+orderRouter.put("/update-message/:orderId",authenticate, updateOrderMessage);
 
 export default orderRouter;

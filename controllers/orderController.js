@@ -526,3 +526,40 @@ export async function updateOrderStatus(req, res) {
         res.status(500).json({ message: err.message });
     }
 }
+
+
+
+
+// Order එකට අදාළ Admin Message එක Update කරන්න හෝ Delete කරන්න වෙනම Function එකක්
+export async function updateOrderMessage(req, res) {
+    // Admin කෙනෙක්ද කියලා Check කිරීම
+    if (req.user == null || req.user.isAdmin == false) {
+        res.status(401).json({ message: "Unauthorized! Admin access required." });
+        return;
+    }
+
+    try {
+        const { orderId } = req.params;
+        const { adminMessage } = req.body; // Frontend එකෙන් එවන මැසේජ් එක
+
+        // URL එකෙන් එන orderId එකට අදාළ Order එක හොයනවා
+        const order = await Order.findOne({ orderId: orderId });
+
+        if (order == null) {
+            res.status(404).json({ message: "Order not found" });
+            return;
+        }
+
+        // Database එකේ adminMessage එක විතරක් update කරනවා
+        // Frontend එකෙන් හිස් string එකක් ("") එව්වොත් මැසේජ් එක auto මකලා යනවා
+        await Order.updateOne(
+            { orderId: orderId },
+            { adminMessage: adminMessage }
+        );
+
+        res.json({ message: "Order message updated successfully!" });
+
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+}

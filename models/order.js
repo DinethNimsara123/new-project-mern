@@ -48,6 +48,10 @@ const orderSchema = new mongoose.Schema({
         required: true,
         default: Date.now
     },
+    adminMessage: {
+        type: String,
+        default: "" // මුලින්ම order එක දාද්දි මැසේජ් එකක් නැති නිසා හිස්ව තියෙන්නේ
+    },
     items: [
         {
             product: {
