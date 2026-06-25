@@ -562,4 +562,49 @@ export async function updateOrderMessage(req, res) {
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
+} 
+
+
+
+
+
+export async function customerDeleteOrder(req, res) {
+    try {
+        const orderId = req.params.id;
+
+        // 1. ආරක්ෂක පියවර: ඇඩ්මින් කෙනෙක් මේ රික්වෙස්ට් එක එව්වොත් බ්ලොක් කරනවා
+        if (req.user.isAdmin === true) {
+            return res.status(403).json({ 
+                message: "Action denied! Admins cannot use this endpoint to delete orders." 
+            });
+        }
+
+        // 2. Database එකෙන් ඕඩර් එක සොයා ගැනීම
+        const order = await Order.findById(orderId);
+
+        if (!order) {
+            return res.status(404).json({ message: "Order not found" });
+        }
+
+        // 3. ආරක්ෂක පියවර: මේ ඕඩර් එක අයිති අදාළ ලොග් වී සිටින කස්ටමර්ටමද කියා බැලීම
+        if (order.email !== req.user.email) {
+            return res.status(403).json({ message: "Unauthorized! This is not your order." });
+        }
+
+        // 4. කස්ටමර් කැන්සල් කරන නිසා බඩු ටික ආපහු Product Stock එකට එකතු කිරීම
+        for (const item of order.orderedItems) {
+            await Product.findByIdAndUpdate(
+                item.productId, 
+                { $inc: { stock: item.quantity } } // Stock එක ආපහු වැඩි කරනවා
+            );
+        }
+
+        // 5. ඕඩර් එක database එකෙන් මකා දැමීම
+        await Order.findByIdAndDelete(orderId);
+
+        res.json({ message: "Your order has been cancelled and stock restored successfully!" });
+
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
 }

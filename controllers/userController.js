@@ -66,3 +66,46 @@ export async function loginUser(req,res){
         res,json({message:err.message})
     }
 }
+
+
+export async function getUser(req, res) {
+    // 1. සර්ගේ ස්ක්‍රීන් එකේ විදිහටම req.user එක null ද කියා බැලීම
+    if (req.user == null) {
+        res.status(401).json({ message: "Unauthorized" });
+        return;
+    }
+
+    try {
+        const email = req.user.email;
+
+        // 2. Database එකෙන් user ව සොයා ගැනීම
+        const user = await User.findOne({ email: email });
+
+        // 3. User කෙනෙක් නැත්නම් (සර් ලියපු විදිහටම 404 Error එක)
+        if (user == null) {
+            res.status(404).json({ message: "User not found" });
+            return;
+        }
+
+        // 4. User ව block කරලා නම් (සර් ලියපු විදිහටම 403 Error එක)
+        if (user.isBlocked) {
+            res.status(403).json({ message: "User is blocked" });
+            return;
+        }
+
+        // 5. සර් වීඩියෝ එකේ ලියපු ආකෘතියටම (Explicit Mapping) Schema එකේ තියෙන හැම විස්තරයක්ම යැවීම
+        res.json({
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            //password: user.password, 
+            isAdmin: user.isAdmin,
+            isBlocked: user.isBlocked,
+            isEmailVerified: user.isEmailVerified,
+            image: user.image
+        });
+
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+}

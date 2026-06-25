@@ -25,7 +25,7 @@ router.delete("/customer-cancel/:id", orderController.cancelOrderByCustomer);
 export default orderRouter;*/
 
 import express from "express";
-import { createOrder,getAllOrders,deleteOrder, cancelOrderByCustomer,updateOrderStatus,updateOrderMessage} from "../controllers/orderController.js";
+import { createOrder,getAllOrders,deleteOrder, cancelOrderByCustomer,updateOrderStatus,updateOrderMessage,customerDeleteOrder} from "../controllers/orderController.js";
 
 // 🔐 🔥 සර්ගේ authMiddleware එක (jwt) තියෙන ෆයිල් එක මෙතනින් import කරගන්නවා
 // (සටහන: ඔයාගේ jwt middleware ෆයිල් එක තියෙන්නේ 'middlewares/auth.js' වගේ වෙනත් තැනක නම් ඒ path එක දෙන්න)
@@ -52,5 +52,8 @@ orderRouter.delete("/customer-cancel/:id", authenticate, cancelOrderByCustomer);
 orderRouter.put("/update-status/:orderId", authenticate, updateOrderStatus);
 
 orderRouter.put("/update-message/:orderId",authenticate, updateOrderMessage);
+
+// කස්ටමර්ට විතරක් ඕඩර් එක කැන්සල් කරලා ස්ටොක් රීස්ටෝර් කරන්න දෙන Route එක
+orderRouter.delete("/customer/:id", authenticate, customerDeleteOrder);
 
 export default orderRouter;
