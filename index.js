@@ -7,7 +7,7 @@ import userRouter from "./routers/userRouter.js"
 import authenticate from "./middlewares/authenticate.js"
 import dotenv from "dotenv"
 import cors from "cors"
-
+import settingRouter from "./routers/settingRouter.js"
 
 dotenv.config()
 
@@ -32,6 +32,7 @@ app.use(express.json())
 app.use("/api/users",userRouter)
 app.use("/api/products",productRouter)
 app.use("/api/orders", orderRouter);
+app.use("/api/settings", settingRouter);
 
 app.use(authenticate)
 
