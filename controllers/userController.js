@@ -2,6 +2,7 @@ import User from "../models/User.js"
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
 import dotenv from "dotenv"
+import nodemailer from 'nodemailer';
 dotenv.config()
 
 export const createUser=async(req,res)=>{
@@ -288,6 +289,186 @@ export async function googleLogin(req, res) {
 
     } catch (err) {
         console.error("Google Login Error:", err);
+        res.status(500).json({ message: err.message });
+    }
+}
+
+
+
+
+// 1. මුරපදය යළි සැකසීමට ඉල්ලීම - පැරණි OTP ඉවත් කර අලුත් OTP එකක් පමණක් යැවීම
+export async function requestPasswordReset(req, res) {
+    try {
+        const { email } = req.body;
+        
+        const user = await User.findOne({ email });
+        
+        if (!user) {
+            return res.status(404).json({ 
+                message: "User with this email does not exist." 
+            });
+        }
+
+        if (user.isBlocked) {
+            return res.status(403).json({ 
+                message: "This account has been blocked by the administrator." 
+            });
+        }
+
+        // අහඹු ඉලක්කම් 6ක OTP කේතයක් උත්පාදනය කිරීම
+        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedOtp = await bcrypt.hash(otpCode, salt);
+
+        // 👉 මෙහිදී පැරණි resetOtp සහ resetOtpExpire fields සම්පූර්ණයෙන්ම අලුත් OTP එක මඟින් Overwrite වේ. 
+        // ඒ අනුව ඩේටාබේස් එකේ ගබඩා වන්නේ එකම එක (අලුත්ම) OTP අංකයක් පමණි.
+        user.resetOtp = hashedOtp;
+        user.resetOtpExpire = Date.now() + 10 * 60 * 1000; 
+        await user.save();
+
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: "your-email@gmail.com", 
+                pass: "your-app-password"       
+            }
+        });
+
+        const mailOptions = {
+            from: "your-email@gmail.com",
+            to: user.email,
+            subject: "Password Reset OTP Code",
+            text: `Your OTP code for password reset is: ${otpCode}. It will expire in 10 minutes.`
+        };
+
+        await transporter.sendMail(mailOptions);
+
+        res.status(200).json({ 
+            message: "OTP sent to your email successfully." 
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+// 2. OTP අංකය පරික්ෂා කර, නව මුරපදය යාවත්කාලීන කිරීම සහ භාවිත කළ OTP ඉවත් කිරීම
+export async function resetPassword(req, res) {
+    try {
+        const { email, otp, newPassword } = req.body;
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found." });
+        }
+
+        // ඩේටාබේස් එකේ OTP එකක් ඇත්තටම සේව් වෙලා තියෙනවද බැලීම
+        if (!user.resetOtp || !user.resetOtpExpire) {
+            return res.status(400).json({ message: "No active OTP request found for this user." });
+        }
+
+        const isOtpValid = await bcrypt.compare(otp, user.resetOtp);
+
+        if (!isOtpValid || user.resetOtpExpire < Date.now()) {
+            return res.status(400).json({ message: "Invalid or expired OTP code." });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        // 👉 මුරපදය සාර්ථකව වෙනස් කළ පසු, අදාළ OTP දත්ත සහ කාල සීමාව ඩේටාබේස් එකෙන් සම්පූර්ණයෙන්ම මකා දැමීම (Delete / Clear)
+        user.password = hashedPassword;
+        user.resetOtp = undefined;
+        user.resetOtpExpire = undefined;
+        await user.save();
+
+        res.status(200).json({ message: "Password reset successfully. OTP has been cleared." });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+
+
+
+
+
+// 1. සියලුම යූසර්ලාගේ දත්ත ලබා ගැනීම (මුරපදය හැර)
+export async function getAllUsers(req, res) {
+    try {
+        if (!req.user.isAdmin) {
+            return res.status(403).json({ message: "Access denied. Admins only." });
+        }
+        const users = await User.find().select('-password');
+        res.status(200).json(users);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+}
+
+// 2. යූසර්ගේ භූමිකාව (Role) වෙනස් කිරීම - (User හෝ Admin)
+export async function updateUserRole(req, res) {
+    try {
+        if (!req.user.isAdmin) {
+            return res.status(403).json({ message: "Access denied. Admins only." });
+        }
+        const { userId } = req.params;
+        const { role } = req.body;
+        const isAdmin = role === "Admin";
+
+        const updatedUser = await User.findByIdAndUpdate(
+            userId, 
+            { isAdmin }, 
+            { new: true }
+        ).select('-password');
+
+        if (!updatedUser) return res.status(404).json({ message: "User not found" });
+        res.status(200).json(updatedUser);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+}
+
+// 3. යූසර්ව Block හෝ Unblock කිරීම
+export async function toggleBlockStatus(req, res) {
+    try {
+        if (!req.user.isAdmin) {
+            return res.status(403).json({ message: "Access denied. Admins only." });
+        }
+        const { userId } = req.params;
+        const user = await User.findById(userId);
+        
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        user.isBlocked = !user.isBlocked; 
+        await user.save();
+
+        res.status(200).json({ 
+            message: `User successfully ${user.isBlocked ? 'blocked' : 'unblocked'}`, 
+            isBlocked: user.isBlocked 
+        });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+}
+
+// 4. යූසර්ව ඩේටාබේස් එකෙන් සම්පූර්ණයෙන්ම ඉවත් කිරීම (Delete/Remove)
+export async function deleteUser(req, res) {
+    try {
+        if (!req.user.isAdmin) {
+            return res.status(403).json({ message: "Access denied. Admins only." });
+        }
+        const { userId } = req.params;
+        
+        const deletedUser = await User.findByIdAndDelete(userId);
+        
+        if (!deletedUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        
+        res.status(200).json({ message: "User successfully deleted from the database." });
+    } catch (err) {
         res.status(500).json({ message: err.message });
     }
 }

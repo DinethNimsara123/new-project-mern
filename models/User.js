@@ -30,6 +30,12 @@ const userSchema= new mongoose.Schema(
             default:false
 
         },
+        resetOtp: {
+            type: String
+        },
+        resetOtpExpire: {
+            type: Date
+        },
         isEmailVerified:{
             type:Boolean,
             required:true,

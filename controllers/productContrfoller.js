@@ -128,3 +128,26 @@ export async function getProductById(req,res){
            res.status(500).json({message:err.message})
     }
 }
+
+
+export async function searchProducts(req, res) {
+    try {
+        const query = req.params.query;
+
+        const products = await Product.find({
+            // 👉 ප්‍රධාන කොන්දේසි 3න් එකක් සපිරීම
+            $or: [
+                { name: { $regex: query, $options: "i" } },
+                { description: { $regex: query, $options: "i" } },
+                { altNames: { $elemMatch: { $regex: query, $options: "i" } } }
+            ],
+            // 👉 අමතර කොන්දේසිය: අනිවාර්යයෙන්ම ලබා ගත හැකි (isAvailable) ප්‍රඩක්ට් පමණක් වීම
+            isAvailable: true 
+        });
+
+        res.json(products);
+
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+}
