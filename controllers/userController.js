@@ -189,7 +189,7 @@ export async function updateUserProfile(req, res) {
 
 
 
-export const changePassword = async (req, res) => {
+/*export const changePassword = async (req, res) => {
     try {
         const { oldPassword, newPassword, confirmPassword } = req.body;
         const userId = req.user.id; 
@@ -199,6 +199,41 @@ export const changePassword = async (req, res) => {
         }
 
         const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found." });
+        }
+
+        const isMatch = await bcrypt.compare(oldPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ message: "Incorrect current password." });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        user.password = hashedPassword;
+        await user.save();
+
+        res.status(200).json({ message: "Password successfully updated!" });
+        
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};*/
+
+
+
+export const changePassword = async (req, res) => {
+    try {
+        const { oldPassword, newPassword, confirmPassword } = req.body;
+        const userEmail = req.user.email; // Token එකෙන් email එක ලබා ගැනීම
+
+        if (newPassword !== confirmPassword) {
+            return res.status(400).json({ message: "New passwords do not match." });
+        }
+
+        // Email එක හරහා user ව සෙවීම
+        const user = await User.findOne({ email: userEmail });
         if (!user) {
             return res.status(404).json({ message: "User not found." });
         }
