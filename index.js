@@ -53,11 +53,12 @@ app.get(
                 
                     res.json(students)
             }
-        )
-            
-        
-            
-        
+        ).catch(
+            (err) => {
+                console.error("Error fetching students:", err);
+               
+            }
+        );
     }
 )
 
