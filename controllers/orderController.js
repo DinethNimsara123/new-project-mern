@@ -248,7 +248,7 @@ exports.cancelOrderByCustomer = async (req, res) => {
 
 
 import Order from "../models/order.js";
-import Product from "../models/product.js"; 
+import Product from "../models/Product.js"; 
 import { v4 as uuidv4 } from "uuid";
 
 export async function createOrder(req, res) {
